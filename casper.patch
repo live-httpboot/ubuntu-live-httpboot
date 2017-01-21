@@ -1,0 +1,35 @@
+--- a/scripts/casper
++++ b/scripts/casper
+@@ -214,7 +214,9 @@
+ 
+     [ "$quiet" != "y" ] && log_begin_msg "Trying netboot from ${NFSROOT}"
+ 
+-    if [ "${NETBOOT}" != "nfs" ] && do_cifsmount ; then
++    if [ "${NETBOOT}" = "http" ] && do_httpmount ; then
++        rc=0
++    elif [ "${NETBOOT}" != "nfs" ] && do_cifsmount ; then
+         rc=0
+     elif do_nfsmount ; then
+         NETBOOT="nfs"
+@@ -262,6 +264,21 @@
+             rc=0
+         fi
+     fi
++    return ${rc}
++}
++
++do_httpmount() {
++    rc=1
++    if [ -x "/sbin/httpfs2" ]; then
++        [ "$quiet" != "y" ] && log_begin_msg "Trying httpfs2 ${NFSROOT} /httpfs2"
++        modprobe "${MP_QUIET}" fuse
++	mkdir -p /httpfs
++        if httpfs2 "${NFSROOT}" "/httpfs" ; then
++            [ "$quiet" != "y" ] && log_begin_msg "Trying mount /httpfs/* ${mountpoint}"
++            mount -t iso9660 -r -o loop /httpfs/* ${mountpoint}
++            rc=0
++        fi
++    fi
+     return ${rc}
+ }
+ 

@@ -1,0 +1,23 @@
+#!/bin/sh -e
+
+. /etc/lsb-release
+wget -nc https://sourceforge.net/projects/httpfs/files/httpfs2/httpfs2-0.1.5.tar.gz
+sudo apt install libfuse-dev
+
+rm -R httpfs2-0.1.5 || true
+rm -R initramfs || true
+
+tar xfvz httpfs2-0.1.5.tar.gz
+cd httpfs2-0.1.5
+make httpfs2
+cd ..
+
+mkdir initramfs
+cd initramfs
+lzcat /cdrom/casper/initrd.lz  | cpio -i
+cp ../httpfs2-0.1.5/httpfs2 sbin
+cp /lib/*-linux-gnu/libfuse.so.2 lib
+patch -p1 <../casper.patch
+find . | cpio -o -H newc | lzma -9 -e >../${DISTRIB_CODENAME}_`arch`_initrd.lz
+cd ..
+cp /cdrom/casper/vmlinuz* ${DISTRIB_CODENAME}_`arch`_vmlinuz
