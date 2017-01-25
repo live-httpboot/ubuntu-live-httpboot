@@ -20,6 +20,8 @@ cp ../httpfs2-0.1.5/httpfs2 sbin
 cp /lib/*-linux-gnu/libfuse.so.2 lib
 patch -p1 <../init.patch
 patch -p1 <../casper.patch
-find . | cpio -o -H newc | lzma -9 -e >../${DISTRIB_CODENAME}_`arch`_initrd.lz
+DISTRIB_ARCH=$(arch | sed s/x86_64/amd64/)
+DISTRIB_VERSION=$(echo $DISTRIB_DESCRIPTION | cut -d ' ' -f 2)
+find . | cpio -o -H newc | lzma -9 -e >../${DISTRIB_CODENAME}_${DISTRIB_VERSION}_${DISTRIB_ARCH}_initrd.lz
 cd ..
-cp /cdrom/casper/vmlinuz* ${DISTRIB_CODENAME}_`arch`_vmlinuz
+cp /cdrom/casper/vmlinuz* ${DISTRIB_CODENAME}_${DISTRIB_VERSION}_${DISTRIB_ARCH}_vmlinuz
