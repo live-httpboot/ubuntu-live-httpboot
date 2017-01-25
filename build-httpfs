@@ -9,6 +9,7 @@ rm -R initramfs || true
 
 tar xfvz httpfs2-0.1.5.tar.gz
 cd httpfs2-0.1.5
+patch -p1 <../httpfs.patch
 make httpfs2
 cd ..
 
@@ -17,6 +18,7 @@ cd initramfs
 lzcat /cdrom/casper/initrd.lz  | cpio -i
 cp ../httpfs2-0.1.5/httpfs2 sbin
 cp /lib/*-linux-gnu/libfuse.so.2 lib
+patch -p1 <../init.patch
 patch -p1 <../casper.patch
 find . | cpio -o -H newc | lzma -9 -e >../${DISTRIB_CODENAME}_`arch`_initrd.lz
 cd ..

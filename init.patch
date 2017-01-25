@@ -1,0 +1,11 @@
+--- a/init
++++ b/init
+@@ -213,6 +213,8 @@
+ 	recovery)
+ 		recovery=y
+ 		;;
++	hostsentry=*)
++		echo "${x#hostsentry=}" | sed 's/:/ /' >>/etc/hosts
+ 	esac
+ done
+ 

@@ -1,0 +1,60 @@
+--- a/httpfs2.c
++++ b/httpfs2.c
+@@ -102,6 +102,7 @@
+ } struct_url;
+ 
+ static struct_url main_url;
++static struct addrinfo * cached_addrinfo = NULL;
+ 
+ static off_t get_stat(struct_url*, struct stat * stbuf);
+ static ssize_t get_data(struct_url*, off_t start, size_t size);
+@@ -667,7 +668,7 @@
+ 
+ static int init_url(struct_url* url)
+ {
+-    memset(url, 0, sizeof(url));
++    memset(url, 0, sizeof(*url));
+     url->sock_type = SOCK_CLOSED;
+     url->timeout = TIMEOUT;
+ #ifdef USE_SSL
+@@ -1129,6 +1130,7 @@
+     struct hostent *he;
+     struct sockaddr_in sa;
+ #endif /* USE_IPV6 */
++    struct addrinfo * tmp_cached_addrinfo;
+     socklen_t sa_len;
+     int sock_family, sock_type, sock_protocol;
+ 
+@@ -1138,6 +1140,13 @@
+     (void) memset((void*) &sa, 0, sizeof(sa));
+ 
+ #ifdef USE_IPV6
++    if(cached_addrinfo) {
++	sock_family = cached_addrinfo->ai_family;
++	sock_type = cached_addrinfo->ai_socktype;
++	sock_protocol = cached_addrinfo->ai_protocol;
++	sa_len = cached_addrinfo->ai_addrlen;
++	(void) memmove(&sa, cached_addrinfo->ai_addr, sa_len);
++    } else {
+     (void) memset(&hints, 0, sizeof(hints));
+     hints.ai_family = PF_UNSPEC;
+     hints.ai_socktype = SOCK_STREAM;
+@@ -1176,8 +1185,18 @@
+     sock_type = aiv4->ai_socktype;
+     sock_protocol = aiv4->ai_protocol;
+     sa_len = aiv4->ai_addrlen;
++
++    tmp_cached_addrinfo = malloc(sizeof(struct addrinfo));
++    memcpy(tmp_cached_addrinfo, aiv4, sizeof(struct addrinfo));
++    tmp_cached_addrinfo->ai_canonname = NULL;
++    tmp_cached_addrinfo->ai_next = NULL;
++    tmp_cached_addrinfo->ai_addr = malloc(sa_len);
++    memcpy(tmp_cached_addrinfo->ai_addr, aiv4->ai_addr, sa_len);
++    cached_addrinfo = tmp_cached_addrinfo;
++
+     (void) memmove(&sa, aiv4->ai_addr, sa_len);
+     freeaddrinfo(ai);
++    }
+ 
+ #else /* USE_IPV6 */
+ 
